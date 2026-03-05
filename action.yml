@@ -56,27 +56,32 @@ inputs:
     required: false
     default: 'https://api.github.com'
   files_to_ignore:
-    description: 'Whitespace separated list of files to ignore when calculating the PR size (sum of changes)'
+    description: 'Newline-separated list of regex patterns for files to ignore when calculating the PR size'
     required: false
     default: ''
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args:
-    - --github_token=${{ inputs.GITHUB_TOKEN }}
-    - --github_api_url=${{ inputs.github_api_url }}
-    - --xs_label=${{ inputs.xs_label }}
-    - --xs_max_size=${{ inputs.xs_max_size }}
-    - --s_label=${{ inputs.s_label }}
-    - --s_max_size=${{ inputs.s_max_size }}
-    - --m_label=${{ inputs.m_label }}
-    - --m_max_size=${{ inputs.m_max_size }}
-    - --l_label=${{ inputs.l_label }}
-    - --l_max_size=${{ inputs.l_max_size }}
-    - --xl_label=${{ inputs.xl_label }}
-    - --fail_if_xl=${{ inputs.fail_if_xl }}
-    - --message_if_xl="${{ inputs.message_if_xl }}"
-    - --files_to_ignore=${{ inputs.files_to_ignore }}
+  using: composite
+  steps:
+    - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        FILES_TO_IGNORE: ${{ inputs.files_to_ignore }}
+        XS_LABEL: ${{ inputs.xs_label }}
+        XS_MAX_SIZE: ${{ inputs.xs_max_size }}
+        S_LABEL: ${{ inputs.s_label }}
+        S_MAX_SIZE: ${{ inputs.s_max_size }}
+        M_LABEL: ${{ inputs.m_label }}
+        M_MAX_SIZE: ${{ inputs.m_max_size }}
+        L_LABEL: ${{ inputs.l_label }}
+        L_MAX_SIZE: ${{ inputs.l_max_size }}
+        XL_LABEL: ${{ inputs.xl_label }}
+        FAIL_IF_XL: ${{ inputs.fail_if_xl }}
+        MESSAGE_IF_XL: ${{ inputs.message_if_xl }}
+      with:
+        github-token: ${{ inputs.GITHUB_TOKEN }}
+        script: |
+          const script = require(process.env.ACTION_PATH + '/index.js')
+          await script({ github, context, core })
 branding:
   icon: 'tag'
   color: 'green'
